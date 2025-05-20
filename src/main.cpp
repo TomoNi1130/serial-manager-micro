@@ -2,9 +2,10 @@
 #include "serial_manager.hpp"
 
 BufferedSerial pc(USBTX, USBRX, 115200);
-SerialManager serial(pc, 2);  // idは0以外
+SerialManager serial(pc, 3);  // idは0以外
 
 DigitalIn UserButton(BUTTON1, PullUp);
+DigitalOut LED(LED1);
 
 bool button_pushing = false;
 
@@ -15,7 +16,13 @@ int main() {
   while (1) {
     if (std::optional<SerialMsg> msg = serial.receive_msg(); msg.has_value()) {  // 通信が来たとき
       SerialMsg receive_msg = msg.value();
-      serial.send_log("これがきたぜ" + std::to_string(receive_msg.flags[0]));
+      if (receive_msg.flags[2])
+        LED = true;
+      else
+        LED = false;
+      std::stringstream ss;
+      ss << receive_msg.numbers[0] << "," << receive_msg.numbers[1] << "," << receive_msg.numbers[2] << "," << receive_msg.numbers[3];
+      serial.send_log(ss.str());
     }
     if (!UserButton && !button_pushing) {
       button_pushing = true;
@@ -23,7 +30,6 @@ int main() {
       std::vector<std::string> str_v = {"aa", "bb", "cc"};
       std::vector<bool> b_v = {true, false, false, true};
       serial.send_msg(SerialMsg(f_v, str_v, b_v));  // 順番はどれでもいい
-      serial.send_log("send_msg");
     }
     if (UserButton) {
       button_pushing = false;
