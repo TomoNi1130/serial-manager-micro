@@ -7,33 +7,20 @@ SerialManager serial(pc, 3);  // idは0以外
 DigitalIn UserButton(BUTTON1, PullUp);
 DigitalOut LED(LED1);
 
-bool button_pushing = false;
-
 int main() {
-  pc.set_baud(115200);
   pc.set_blocking(false);
+  pc.set_baud(115200);
+  std::vector<uint8_t> send_msg = {0, 5, 29, 111, 222, 0, 66, 0, 44};
+  std::vector<float> send_msg2 = {0.0, 1.0, 4.4, 22.7, 5555.0, 13000.05, 663.0};
+  std::vector<bool> send_flags = {true, false, true, false, true, false, true, false};
+  SerialMsg serial_msg(send_msg2, send_flags);
   serial.send_log("setup!!");  // ログは表示されるだけで使われない
   while (1) {
-    if (std::optional<SerialMsg> msg = serial.receive_msg(); msg.has_value()) {  // 通信が来たとき
-      SerialMsg receive_msg = msg.value();
-      if (receive_msg.flags[2])
-        LED = true;
-      else
-        LED = false;
-      std::stringstream ss;
-      ss << receive_msg.numbers[0] << "," << receive_msg.numbers[1] << "," << receive_msg.numbers[2] << "," << receive_msg.numbers[3];
-      serial.send_log(ss.str());
-    }
-    if (!UserButton && !button_pushing) {
-      button_pushing = true;
-      std::vector<float> f_v = {0.2, 0.6};  // doublreでも可
-      std::vector<std::string> str_v = {"aa", "bb", "cc"};
-      std::vector<bool> b_v = {true, false, false, true};
-      serial.send_msg(SerialMsg(f_v, str_v, b_v));  // 順番はどれでもいい
-    }
-    if (UserButton) {
-      button_pushing = false;
-    }
+    // serial.send_msg(send_msg);//std::vector<uint8_t>,SerialMsgどちらでも送信可能
+    // serial.send_msg(serial_msg);
+    serial.send_log(std::to_string(serial.received_msg.flags[0]) + " " + std::to_string(serial.received_msg.flags[1]) + " " + std::to_string(serial.received_msg.flags[2]) + " " + std::to_string(serial.received_msg.flags[3]));
+    serial.send_log(std::to_string(serial.received_msg.numbers[0]) + " " + std::to_string(serial.received_msg.numbers[1]) + " " + std::to_string(serial.received_msg.numbers[2]) + " " + std::to_string(serial.received_msg.numbers[3]));
+    ThisThread::sleep_for(10ms);
   }
   return 0;
 }
