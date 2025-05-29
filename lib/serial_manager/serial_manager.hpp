@@ -93,11 +93,19 @@ class SerialManager {
     return encoded;
   }
 
+  enum State {
+    CONNECTED, /**< 接続状態 */
+    STANBY,    /**< 待機状態 */
+  };
+
   void heartbeat();
   void receive_msg();
 
   BufferedSerial& men_serial;
   const uint8_t serial_id;
+
+  int no_heartbeat_count = 0;  // ハートビートのカウント
+  State state_ = STANBY;       // 状態管理
 
   Thread heartbeat_thread;
   Thread receive_thread;

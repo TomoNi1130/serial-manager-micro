@@ -44,6 +44,7 @@ std::vector<uint8_t> SerialManager::cobs_string(const std::string& input_str) {
 
   return encoded;
 }
+
 void SerialManager::send_log(const std::string& log_msg) {
   std::vector<uint8_t> encoded_msg = cobs_string(log_msg);
   men_serial.write(encoded_msg.data(), encoded_msg.size());  // ログメッセージを送信
@@ -51,9 +52,16 @@ void SerialManager::send_log(const std::string& log_msg) {
 
 void SerialManager::heartbeat() {
   while (1) {
-    std::vector<uint8_t> heartbeat_msg = {0xaa, 0x05, 0x24, 0x08, 0x60, serial_id, 0x00};  // ハート
-    men_serial.write(heartbeat_msg.data(), heartbeat_msg.size());                          // ハートビート
-    ThisThread::sleep_for(2000ms);                                                         // 2.0秒ごとにハートビートを送信
+    no_heartbeat_count++;
+    if (no_heartbeat_count >= 4) {
+      state_ = STANBY;
+      std::vector<uint8_t> self_introduction_msg = {0xaa, 0x05, 0x24, 0x08, 0x60, serial_id, 0x00};
+      while (state_ == STANBY) {
+        men_serial.write(self_introduction_msg.data(), self_introduction_msg.size());
+        ThisThread::sleep_for(500ms);
+      }
+    }
+    ThisThread::sleep_for(200ms);
   }
 }
 
@@ -93,6 +101,11 @@ void SerialManager::receive_msg() {
           received_msg.flags.clear();
           received_msg.flags.resize(decorded_data.size());
           received_msg.flags.assign(decorded_data.begin(), decorded_data.end());
+        } else if (type_keeper == 0xaa) {  // pcからのハートビート
+          if (decorded_data[0] == 0x00) {
+            no_heartbeat_count = 0;
+            state_ = CONNECTED;  // ハートビートを受信したので接続状態にする
+          }
         }
         receive_bytes.clear();
       }
