@@ -18,8 +18,12 @@ int main() {
   while (1) {
     // serial.send_msg(send_msg);//std::vector<uint8_t>,SerialMsgどちらでも送信可能
     // serial.send_msg(serial_msg);
-    serial.send_log(std::to_string(serial.received_msg.flags[0]) + " " + std::to_string(serial.received_msg.flags[1]) + " " + std::to_string(serial.received_msg.flags[2]) + " " + std::to_string(serial.received_msg.flags[3]));
-    serial.send_log(std::to_string(serial.received_msg.numbers[0]) + " " + std::to_string(serial.received_msg.numbers[1]) + " " + std::to_string(serial.received_msg.numbers[2]) + " " + std::to_string(serial.received_msg.numbers[3]));
+    std::string button_log_msg;
+    for (bool flag : serial.received_msg.flags) {
+      button_log_msg += std::to_string(flag) + " ";
+    }
+    serial.send_log("buttons:" + button_log_msg);
+    serial.send_log("joys:" + std::to_string(serial.received_msg.numbers[0]) + " " + std::to_string(serial.received_msg.numbers[1]) + " " + std::to_string(serial.received_msg.numbers[2]) + " " + std::to_string(serial.received_msg.numbers[3]));
     ThisThread::sleep_for(10ms);
   }
   return 0;
