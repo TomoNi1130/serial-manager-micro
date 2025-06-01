@@ -16,7 +16,7 @@ logとmsgはバスづまり対策のため一定間隔を開けて送信され�
 同時に送ると送られない場合がある。(5ms間隔)
 
 -導入方法-
-ROS側->https://github.com/TomoNi1130/serial_manager_test
+ROS側->https://github.com/TomoNi1130/ros2_serial_manager/blob/main/README.md
 
 serial_manager.hppをlibにファイルを入れてインクルードする。
 SerialManagerクラスのインスタンスを作る (引数) -> mbed::buffer_serial,ID
