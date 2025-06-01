@@ -1,4 +1,4 @@
-#include "new_serial_manager.hpp"
+#include "serial_manager.hpp"
 
 SerialManager::SerialManager(BufferedSerial& serial, uint8_t id) : men_serial(serial), serial_id(id), state_(STANBY) {
   send_msg_thread.start(callback(this, &SerialManager::serial_send));

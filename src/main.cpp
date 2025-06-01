@@ -18,7 +18,6 @@ int main() {
     for (bool flag : serial.received_flags) {  // bool型の受信内容
       button_log_msg += std::to_string(flag) + " ";
     }
-    // if (!UserButton)
     serial.send_log("joys:" + std::to_string(serial.received_nums[0]) + " " + std::to_string(serial.received_nums[1]) + " " + std::to_string(serial.received_nums[2]) + " " + std::to_string(serial.received_nums[3]));
   }
   return 0;
