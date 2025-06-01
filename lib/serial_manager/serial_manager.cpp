@@ -47,7 +47,9 @@ std::vector<uint8_t> SerialManager::cobs_string(const std::string& input_str) {
 
 void SerialManager::send_log(const std::string& log_msg) {
   std::vector<uint8_t> encoded_msg = cobs_string(log_msg);
-  men_serial.write(encoded_msg.data(), encoded_msg.size());  // ログメッセージを送信
+  if (men_serial.writable())
+    men_serial.write(encoded_msg.data(), encoded_msg.size());  // ログメッセージを送信
+  ThisThread::sleep_for(20ms);
 }
 
 void SerialManager::heartbeat() {
@@ -80,13 +82,11 @@ void SerialManager::receive_msg() {
         OBH = receive_bytes[0];
         for (uint8_t i = 1; i < receive_bytes.size(); i++) {
           if (i == OBH) {
-            decorded_data.push_back(0);
             OBH = receive_bytes[i] + OBH;
           } else {
             decorded_data.push_back(receive_bytes[i]);
           }
         }
-        decorded_data.pop_back();  // 最後の0x00を削除
         if (type_keeper == 0x01) {
           std::vector<float> results;
           for (size_t i = 0; i < decorded_data.size() / sizeof(float); i++) {
