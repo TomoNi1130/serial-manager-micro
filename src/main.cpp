@@ -4,7 +4,8 @@
 BufferedSerial pc(USBTX, USBRX, 115200);  // PCとの通信に使用するシリアルポート
 DigitalIn UserButton(BUTTON1);            // ユーザーボタンのピンを定義
 
-SerialManager serial(pc, 3);  // シリアルマネージャのインスタンスを作成
+SerialManager serial(pc, 3, LED1, BUTTON1);  // シリアルマネージャのインスタンスを作成
+// SerialManager serial(pc, 3);  // シリアルマネージャのインスタンスを作成(ID表示、変更機能なし)
 
 int main() {
   pc.set_blocking(true);

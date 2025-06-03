@@ -7,6 +7,14 @@ SerialManager::SerialManager(BufferedSerial& serial, uint8_t id) : men_serial(se
   state_ = SETUP;
 }
 
+SerialManager::SerialManager(BufferedSerial& serial, uint8_t id, PinMode show_id_pin, PinMode change_id_pin) : men_serial(serial), serial_id(id), state_(STANBY), ShowIDPin(show_id_pin), ChangeIDPin(change_id_pin) {
+  send_msg_thread.start(callback(this, &SerialManager::serial_send));
+  receive_msg_thread.start(callback(this, &SerialManager::serial_callback));
+  heart_beat_thread.start(callback(this, &SerialManager::heart_beat));
+  shoe_id_thread.start(callback(this, &SerialManager::show_id));
+  state_ = SETUP;
+}
+
 void SerialManager::send_log(const std::string& log_msg) {
   sending_log = log_msg;
   ThisThread::sleep_for(10ms);
@@ -17,6 +25,54 @@ int SerialManager::get_id() const {
 }
 bool SerialManager::is_connected() const {
   return state_ == CONNECT;
+}
+
+void SerialManager::show_id() {
+  DigitalOut led(ShowIDPin);
+  DigitalIn userbutton(ChangeIDPin, PullUp);
+  bool button_pushing;
+  enum MODE {
+    SETID,
+    SHOWID,
+  };
+  MODE mode;
+  Timer id_set_timer;
+  while (1) {
+    while (mode == SHOWID) {
+      for (int i = 0; i < serial_id; i++) {
+        led = true;
+        ThisThread::sleep_for(200ms);
+        led = false;
+        ThisThread::sleep_for(300ms)
+      }
+      ThisThread::sleep_for(1000ms);
+      button_pushing = false;
+    }
+    if (!button_pushing && !userbutton) {  // ボタンが押されたら
+      mode = SETID;
+      button_pushing = true;
+      id_set_timer.reset();
+      id_set_timer.start();
+      uint8_t buf_id = 0;
+      while (mode == SETID) {
+        if (userbutton) {
+          led = false;
+          button_pushing = false;
+        } else {
+          led = true;
+        }
+        if (!button_pushing && !userbutton) {
+          button_pushing = true;
+          buf_id++;
+          id_set_timer.reset();
+        }
+        if (id_set_timer.read_ms() > 1500ms) {
+          serial_id = buf_id;
+          mode = SHOWID;
+        }
+      }
+    }
+  }
 }
 
 std::vector<uint8_t> SerialManager::make_msg(const std::string& input) {
