@@ -1,32 +1,44 @@
-serial_managerのマイコン側の簡単な使用例
+# serial_manager マイコン側 仕様
 
-SerialMsg構造体で送れる
+複数マイコンを同時に管理するために作った。
 
-send_log(std::string)でログが送れる
-send_msg(SerialMsg)で情報を送れる
+## 基本仕様
 
-pc、マイコンどちらを初期化しても自動的に接続準備がされる。
+- マイコンの識別にはID(1~255)を使っている
+- PC・マイコンどちらを初期化しても自動的にIDの特定、通信の接続が行われる
+- 必要なピンを指定するとあとからIDの確認、変更ができる
+- float,boolをデータとして送信可能
 
-受け取ったデータはreceived_msg変数に収納される
-値を取りたいときはインスタンスから取るようにする。
-従来のように変数に入れて使うわけでないので注意
+## 送信
+- `SerialMsg`構造体でデータ送信が可能
+- `send_log(std::string)` でログを送信
+- `send_msg(SerialMsg)` で情報を送信、topicで公開される
 
--注意-
-logとmsgはバスづまり対策のため一定間隔を開けて送信される。
-同時に送ると送られない場合がある。(5ms間隔)
+## 受信
 
--導入方法-
-ROS側->https://github.com/TomoNi1130/ros2_serial_manager/blob/main/README.md
+- pcから受け取ったデータは `received_flags`(bool),`received_nums`(float) に格納される
+- 値を取得したい場合はインスタンスから直接取得してください  
+  （従来のように変数へコピーして使う方式はできない）
 
-serial_manager.hppをlibにファイルを入れてインクルードする。
-SerialManagerクラスのインスタンスを作る (引数) -> mbed::buffer_serial,ID
--送信
-send_msg -> topicで公開される
-send_log -> log表示
--受信
-インスタンス.received_flags or インスタンス.received_nums から送られた値を読む
 
--IDの確認、変更-
-インスタンスの宣言時にpinを指定するとIDの確認及び、変更する機能がつく。
-一度ボタンを押すとセットIDモードになり、その後ボタンを押した回数がIDになる。
-1.5s押さずにいるとセットIDモードは終わる。
+## IDの確認・変更
+
+- インスタンス宣言時にピンを指定すると、IDの確認・変更機能が有効
+- 一度ボタンを押すと「セットIDモード」になり、その後ボタンを押した回数がIDとなる
+- 1.5秒間押さずにいるとセットIDモードは終了
+
+
+## 注意事項
+
+- `log` と `msg` はバス詰まり対策のため、**一定間隔（5ms）を空けて送信**される
+- 同時に送信すると、送られない場合がある
+
+
+## 導入方法
+
+- ROS側の手順：[ros2_serial_manager README](https://github.com/TomoNi1130/ros2_serial_manager/blob/main/README.md)
+- `serial_manager` を `lib` フォルダに入れてインクルード
+- `SerialManager` クラスのインスタンスを作成  
+  （引数：`mbed::BufferedSerial`, `ID`）  
+                or  
+   (引数：`mbed::BufferedSerial`, `ID` , ID表示用のledピン , 変更用のユーザーボタンピン)
