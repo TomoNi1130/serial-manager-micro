@@ -1,18 +1,20 @@
 #include "serial_manager.hpp"
 
-SerialManager::SerialManager(BufferedSerial& serial, uint8_t id) : men_serial(serial), serial_id(id), state_(STANBY) {
+SerialManager::SerialManager(BufferedSerial& serial, uint8_t id) : men_serial(serial), serial_id(id), state_(STANBY), ShowIDPin(LED1), ChangeIDPin(BUTTON1) {
   send_msg_thread.start(callback(this, &SerialManager::serial_send));
   receive_msg_thread.start(callback(this, &SerialManager::serial_callback));
   heart_beat_thread.start(callback(this, &SerialManager::heart_beat));
   state_ = SETUP;
 }
 
-SerialManager::SerialManager(BufferedSerial& serial, uint8_t id, PinMode show_id_pin, PinMode change_id_pin) : men_serial(serial), serial_id(id), state_(STANBY), ShowIDPin(show_id_pin), ChangeIDPin(change_id_pin) {
+SerialManager::SerialManager(BufferedSerial& serial, uint8_t id, PinName show_id_pin, PinName change_id_pin) : men_serial(serial), serial_id(id), state_(STANBY), ShowIDPin(show_id_pin), ChangeIDPin(change_id_pin) {
   send_msg_thread.start(callback(this, &SerialManager::serial_send));
   receive_msg_thread.start(callback(this, &SerialManager::serial_callback));
   heart_beat_thread.start(callback(this, &SerialManager::heart_beat));
-  shoe_id_thread.start(callback(this, &SerialManager::show_id));
+  show_id_thread.start(callback(this, &SerialManager::show_id));
+  change_mode_thread.start(callback(this, &SerialManager::change_mode));
   state_ = SETUP;
+  mode = SHOWID;
 }
 
 void SerialManager::send_log(const std::string& log_msg) {
@@ -28,26 +30,25 @@ bool SerialManager::is_connected() const {
 }
 
 void SerialManager::show_id() {
-  DigitalOut led(ShowIDPin);
-  DigitalIn userbutton(ChangeIDPin, PullUp);
-  bool button_pushing;
-  enum MODE {
-    SETID,
-    SHOWID,
-  };
-  MODE mode;
-  Timer id_set_timer;
   while (1) {
     while (mode == SHOWID) {
       for (int i = 0; i < serial_id; i++) {
         led = true;
-        ThisThread::sleep_for(200ms);
+        ThisThread::sleep_for(150ms);
         led = false;
-        ThisThread::sleep_for(300ms)
+        ThisThread::sleep_for(150ms);
       }
-      ThisThread::sleep_for(1000ms);
-      button_pushing = false;
+      ThisThread::sleep_for(1200ms);
     }
+    ThisThread::sleep_for(1000ms);
+  }
+}
+
+void SerialManager::change_mode() {
+  DigitalIn userbutton(ChangeIDPin, PullUp);
+  bool button_pushing;
+  Timer id_set_timer;
+  while (1) {
     if (!button_pushing && !userbutton) {  // ボタンが押されたら
       mode = SETID;
       button_pushing = true;
@@ -55,23 +56,34 @@ void SerialManager::show_id() {
       id_set_timer.start();
       uint8_t buf_id = 0;
       while (mode == SETID) {
+        if (!button_pushing && !userbutton) {
+          printf("%d\n", buf_id);
+          button_pushing = true;
+          buf_id++;
+          id_set_timer.reset();
+          id_set_timer.start();
+        }
         if (userbutton) {
           led = false;
           button_pushing = false;
         } else {
           led = true;
         }
-        if (!button_pushing && !userbutton) {
-          button_pushing = true;
-          buf_id++;
-          id_set_timer.reset();
-        }
-        if (id_set_timer.read_ms() > 1500ms) {
+        id_set_timer.stop();
+        if (id_set_timer.read_ms() > 1500) {
           serial_id = buf_id;
           mode = SHOWID;
+          state_ = SETUP;
+          id_set_timer.reset();
+          led = false;
         }
+        id_set_timer.start();
+        ThisThread::sleep_for(100ms);
       }
+    } else {
+      button_pushing = false;
     }
+    ThisThread::sleep_for(100ms);
   }
 }
 
@@ -203,6 +215,7 @@ void SerialManager::serial_callback() {
             } else if (decorded_data == config::HEARTBEAT_BYTES) {
               last_heart_beat_time = Kernel::Clock::now();
             }
+            break;
           }
           case SETUP: {
             if (std::equal(config::INTRODUCTION_BYTES.begin(), config::INTRODUCTION_BYTES.end(), decorded_data.begin())) {

@@ -42,7 +42,7 @@ struct SerialMsg {
 class SerialManager {
  public:
   SerialManager(BufferedSerial& serial, uint8_t id);
-  SerialManager(BufferedSerial& serial, uint8_t id, PinMode id_show_id, PinMode change_id_pin);
+  SerialManager(BufferedSerial& serial, uint8_t id, PinName id_show_id, PinName change_id_pin);
 
   void send_msg(const SerialMsg& send_msg) { sending_msg = send_msg; };
   template <typename T>
@@ -63,6 +63,7 @@ class SerialManager {
   void serial_send();
   void heart_beat();
   void show_id();
+  void change_mode();
 
   template <typename T>
   std::vector<uint8_t> make_msg(const std::vector<T>& input);
@@ -76,22 +77,30 @@ class SerialManager {
     CONNECT,  // 通信状態、通信可能
   };
 
+  enum MODE {
+    SETID,
+    SHOWID,
+  };
+
   BufferedSerial& men_serial;
   uint8_t serial_id;
 
   SerialMsg sending_msg;
   std::string sending_log;
 
-  State state_;                         // 状態管理
+  State state_;  // 状態管理
+  MODE mode;
   const double WaitTimePerByte_ = 0.1;  // ms
 
   Thread send_msg_thread;
   Thread receive_msg_thread;
   Thread heart_beat_thread;
   Thread show_id_thread;
+  Thread change_mode_thread;
 
   const PinName ShowIDPin;
   const PinName ChangeIDPin;
+  DigitalOut led{ShowIDPin};
 
   Kernel::Clock::time_point last_heart_beat_time;
 
