@@ -2,10 +2,10 @@
 #include "serial_manager.hpp"
 
 BufferedSerial pc(USBTX, USBRX, 115200);  // PCとの通信に使用するシリアルポート
-DigitalIn UserButton(BUTTON1);            // ユーザーボタンのピンを定義
 
-SerialManager serial(pc, 3, LED1, BUTTON1);  // シリアルマネージャのインスタンスを作成
-// SerialManager serial(pc, 3);  // シリアルマネージャのインスタンスを作成(ID表示、変更機能なし)
+SerialManager serial(pc, LED1, BUTTON1);  // シリアルマネージャのインスタンスを作成
+// SerialManager serial(pc,3,LED1,BUTTON1); //初期IDの指定
+//  SerialManager serial(pc, 3);  // シリアルマネージャのインスタンスを作成(ID表示機能なし)
 
 int main() {
   pc.set_blocking(true);
@@ -15,11 +15,8 @@ int main() {
   SerialMsg serial_msg(sending_msg, sending_flags);
   while (1) {
     serial.send_msg(serial_msg);
-    std::string button_log_msg;
-    for (bool flag : serial.received_flags) {  // bool型の受信内容
-      button_log_msg += std::to_string(flag) + " ";
-    }
-    serial.send_log("joys:" + std::to_string(serial.received_nums[0]) + " " + std::to_string(serial.received_nums[1]) + " " + std::to_string(serial.received_nums[2]) + " " + std::to_string(serial.received_nums[3]));
+    serial.send_log("log test");   // ログ送信
+    ThisThread::sleep_for(500ms);  // 送信間隔
   }
   return 0;
 }

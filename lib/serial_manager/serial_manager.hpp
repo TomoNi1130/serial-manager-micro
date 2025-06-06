@@ -41,7 +41,9 @@ struct SerialMsg {
 
 class SerialManager {
  public:
+  SerialManager(BufferedSerial& serial);
   SerialManager(BufferedSerial& serial, uint8_t id);
+  SerialManager(BufferedSerial& serial, PinName id_show_id, PinName change_id_pin);
   SerialManager(BufferedSerial& serial, uint8_t id, PinName id_show_id, PinName change_id_pin);
 
   void send_msg(const SerialMsg& send_msg) { sending_msg = send_msg; };
@@ -83,7 +85,7 @@ class SerialManager {
   };
 
   BufferedSerial& men_serial;
-  uint8_t serial_id;
+  static uint8_t serial_id;
 
   SerialMsg sending_msg;
   std::string sending_log;
