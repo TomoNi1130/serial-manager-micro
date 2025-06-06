@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "mbed.h"
+#include "stm32f4xx_hal.h"
 
 namespace config {
 const uint8_t FLOAT_HEADER = 0x01;
@@ -65,6 +66,9 @@ class SerialManager {
   void heart_beat();
   void show_id();
   void change_mode();
+
+  static void save_id_to_backup(uint8_t id);
+  static uint8_t load_id_from_backup();
 
   template <typename T>
   std::vector<uint8_t> make_msg(const std::vector<T>& input);

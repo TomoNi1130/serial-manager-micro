@@ -18,6 +18,7 @@ SerialManager::SerialManager(BufferedSerial& serial, PinName show_id_pin, PinNam
   change_mode_thread.start(callback(this, &SerialManager::change_mode));
   state_ = SETUP;
   mode = SHOWID;
+  serial_id = load_id_from_backup();  // バックアップから復元
 }
 
 SerialManager::SerialManager(BufferedSerial& serial, uint8_t id, PinName show_id_pin, PinName change_id_pin) : men_serial(serial), state_(STANBY), ShowIDPin(show_id_pin), ChangeIDPin(change_id_pin) {
@@ -90,6 +91,7 @@ void SerialManager::change_mode() {
           state_ = SETUP;
           id_set_timer.reset();
           led = false;
+          save_id_to_backup(serial_id);  // バックアップに保存
         }
         id_set_timer.start();
         ThisThread::sleep_for(100ms);
@@ -266,4 +268,17 @@ void SerialManager::heart_beat() {
     men_serial.write(heartbeat_msg.data(), heartbeat_msg.size());
     ThisThread::sleep_for(200ms);
   }
+}
+
+void SerialManager::save_id_to_backup(uint8_t id) {
+  // RTCバックアップレジスタへの書き込み
+  HAL_PWR_EnableBkUpAccess();
+  __HAL_RCC_RTC_ENABLE();
+  RTC->BKP0R = id;
+}
+
+uint8_t SerialManager::load_id_from_backup() {
+  HAL_PWR_EnableBkUpAccess();
+  __HAL_RCC_RTC_ENABLE();
+  return RTC->BKP0R & 0xFF;
 }
