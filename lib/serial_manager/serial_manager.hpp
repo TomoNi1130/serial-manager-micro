@@ -41,7 +41,6 @@ struct SerialMsg {
 
 class SerialManager {
  public:
-  SerialManager(BufferedSerial& serial);
   SerialManager(BufferedSerial& serial, uint8_t id);
   SerialManager(BufferedSerial& serial, PinName id_show_id, PinName change_id_pin);
   SerialManager(BufferedSerial& serial, uint8_t id, PinName id_show_id, PinName change_id_pin);

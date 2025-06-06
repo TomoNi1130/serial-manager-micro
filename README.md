@@ -39,6 +39,8 @@
 - ROS側の手順：[ros2_serial_manager README](https://github.com/TomoNi1130/ros2_serial_manager/blob/main/README.md)
 - `serial_manager` を `lib` フォルダに入れてインクルード
 - `SerialManager` クラスのインスタンスを作成  
-  （引数：`mbed::BufferedSerial`, `ID`）  
+  （引数：`mbed::BufferedSerial`,`ID`）-> IDの表示変更不可  
                 or  
-   (引数：`mbed::BufferedSerial`, `ID` , ID表示用のledピン , 変更用のユーザーボタンピン)
+   (引数：`mbed::BufferedSerial`, ID表示用のledピン , 変更用のユーザーボタンピン)->初期IDなし(ソフトリセットしても現在の値を保持)  
+   or  
+    (引数：`mbed::BufferedSerial`, ID表示用のledピン , 変更用のユーザーボタンピン)->初期IDあり(ソフトリセットすると初期に戻る)  

@@ -1,20 +1,16 @@
 #include "serial_manager.hpp"
 
-SerialManager::SerialManager(BufferedSerial& serial) : men_serial(serial), serial_id(0), state_(STANBY), ShowIDPin(LED1), ChangeIDPin(BUTTON1) {
+uint8_t SerialManager::serial_id = 0;
+
+SerialManager::SerialManager(BufferedSerial& serial, uint8_t id) : men_serial(serial), state_(STANBY), ShowIDPin(LED1), ChangeIDPin(BUTTON1) {
   send_msg_thread.start(callback(this, &SerialManager::serial_send));
   receive_msg_thread.start(callback(this, &SerialManager::serial_callback));
   heart_beat_thread.start(callback(this, &SerialManager::heart_beat));
   state_ = SETUP;
+  serial_id = id;
 }
 
-SerialManager::SerialManager(BufferedSerial& serial, uint8_t id) : men_serial(serial), serial_id(id), state_(STANBY), ShowIDPin(LED1), ChangeIDPin(BUTTON1) {
-  send_msg_thread.start(callback(this, &SerialManager::serial_send));
-  receive_msg_thread.start(callback(this, &SerialManager::serial_callback));
-  heart_beat_thread.start(callback(this, &SerialManager::heart_beat));
-  state_ = SETUP;
-}
-
-SerialManager::SerialManager(BufferedSerial& serial, PinName show_id_pin, PinName change_id_pin) : men_serial(serial), serial_id(0), state_(STANBY), ShowIDPin(show_id_pin), ChangeIDPin(change_id_pin) {
+SerialManager::SerialManager(BufferedSerial& serial, PinName show_id_pin, PinName change_id_pin) : men_serial(serial), state_(STANBY), ShowIDPin(show_id_pin), ChangeIDPin(change_id_pin) {
   send_msg_thread.start(callback(this, &SerialManager::serial_send));
   receive_msg_thread.start(callback(this, &SerialManager::serial_callback));
   heart_beat_thread.start(callback(this, &SerialManager::heart_beat));
@@ -24,7 +20,7 @@ SerialManager::SerialManager(BufferedSerial& serial, PinName show_id_pin, PinNam
   mode = SHOWID;
 }
 
-SerialManager::SerialManager(BufferedSerial& serial, uint8_t id, PinName show_id_pin, PinName change_id_pin) : men_serial(serial), serial_id(id), state_(STANBY), ShowIDPin(show_id_pin), ChangeIDPin(change_id_pin) {
+SerialManager::SerialManager(BufferedSerial& serial, uint8_t id, PinName show_id_pin, PinName change_id_pin) : men_serial(serial), state_(STANBY), ShowIDPin(show_id_pin), ChangeIDPin(change_id_pin) {
   send_msg_thread.start(callback(this, &SerialManager::serial_send));
   receive_msg_thread.start(callback(this, &SerialManager::serial_callback));
   heart_beat_thread.start(callback(this, &SerialManager::heart_beat));
@@ -32,6 +28,7 @@ SerialManager::SerialManager(BufferedSerial& serial, uint8_t id, PinName show_id
   change_mode_thread.start(callback(this, &SerialManager::change_mode));
   state_ = SETUP;
   mode = SHOWID;
+  serial_id = id;
 }
 
 void SerialManager::send_log(const std::string& log_msg) {
