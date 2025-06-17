@@ -37,7 +37,7 @@
 
 ## 導入方法
 
-- ROS側の手順：[ros2_serial_manager README](https://github.com/TomoNi1130/ros2_serial_manager/blob/main/README.md)
+- ROS2側の手順：[ros2_serial_manager README](https://github.com/TomoNi1130/ros2_serial_manager/blob/main/README.md)
 - `serial_manager` を `lib` フォルダに入れてインクルード
 - `SerialManager` クラスのインスタンスを作成  
   （引数：`mbed::BufferedSerial`,`ID`）-> IDの変更不可  
