@@ -23,8 +23,9 @@
 
 ## IDの確認・変更
 
-- インスタンス宣言時にピンを指定すると、IDの確認・変更機能が有効
-- 一度ボタンを押すと「セットIDモード」になり、その後ボタンを押した回数がIDとなる
+- インスタンス宣言時にピンを指定すると、IDの確認・変更機能が有効化
+- IDを宣言時に設定していると変更は無効
+- 一度ボタンを押すとセットIDモードになり、その後ボタンを押した回数がIDとなる
 - 1.5秒間押さずにいるとセットIDモードが終了、IDの変更が適応される。
 
 
@@ -39,11 +40,11 @@
 - ROS側の手順：[ros2_serial_manager README](https://github.com/TomoNi1130/ros2_serial_manager/blob/main/README.md)
 - `serial_manager` を `lib` フォルダに入れてインクルード
 - `SerialManager` クラスのインスタンスを作成  
-  （引数：`mbed::BufferedSerial`,`ID`）-> IDの表示変更不可  
+  （引数：`mbed::BufferedSerial`,`ID`）-> IDの変更不可  
                 or  
-   (引数：`mbed::BufferedSerial`, ID表示用のledピン , 変更用のユーザーボタンピン)->初期IDなし(ソフトリセットしても現在の値を保持)  
+   (引数：`mbed::BufferedSerial`, `表示用ledピン` , `変更用ユーザーボタンピン`)->初期IDなし(ソフトリセットしても現在の値を保持)  
    or  
-    (引数：`mbed::BufferedSerial`, ID表示用のledピン , 変更用のユーザーボタンピン)->初期IDあり(ソフトリセットすると初期に戻る)  
+   (引数：`mbed::BufferedSerial`,`ID`, `表示用ledピン` , `変更用ユーザーボタンピン`)->初期IDあり(ソフトリセットすると初期に戻る)  
 
 ## 小ネタ
 - 実はpc側でserial_managerが立ち上がっていなければ何も送らない。  
