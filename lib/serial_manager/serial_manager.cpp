@@ -271,7 +271,6 @@ void SerialManager::heart_beat() {
 }
 
 void SerialManager::save_id_to_backup(uint8_t id) {
-  // RTCバックアップレジスタへの書き込み
   HAL_PWR_EnableBkUpAccess();
   __HAL_RCC_RTC_ENABLE();
   RTC->BKP0R = id;
