@@ -17,10 +17,11 @@ int main() {
   std::vector<float> sending_msg = {11.27, 25.7, 66.8, 44.9, 8.786};
   while (1) {
     bool now_sw = !sw;
-    std::vector<bool> sending_flags = {now_sw};
+    std::array<bool, 1> sending_flags = {now_sw};
     SerialMsg serial_msg(sending_msg, sending_flags);
     serial.send_msg(serial_msg);
-    // serial.send_log("log test");  // ログ送信
+    serial.send_log("log test");  // ログ送信
+    ThisThread::sleep_for(500);
   }
   return 0;
 }
