@@ -46,7 +46,10 @@ class SerialManager {
   SerialManager(BufferedSerial& serial, PinName id_show_id, PinName change_id_pin);
   SerialManager(BufferedSerial& serial, uint8_t id, PinName id_show_id, PinName change_id_pin);
 
-  void send_msg(const SerialMsg& send_msg) { sending_msg = send_msg; };
+  void send_msg(const SerialMsg& send_msg) {
+    sending_msg = send_msg;
+    ThisThread::sleep_for(5ms);
+  };
   template <typename T>
   void send_msg(const std::vector<T>& send_data);
   template <typename T, std::size_t S>
