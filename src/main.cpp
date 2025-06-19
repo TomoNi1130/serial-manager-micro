@@ -10,7 +10,7 @@ SerialManager serial(pc, LED1, BUTTON1);  // シリアルマネージャのイ�
 int main() {
   pc.set_blocking(true);
   pc.set_baud(115200);
-  std::vector<float> sending_msg = {0.0, 1.0, 4.4, 22.7, 5555.0, 13000.05, 663.0};
+  std::vector<float> sending_msg = {11.27, 25.7, 66.8, 44.9, 8.786};
   std::vector<bool> sending_flags = {true, false, true, false, true, false, true, false};
   SerialMsg serial_msg(sending_msg, sending_flags);
   while (1) {
