@@ -151,7 +151,9 @@ void SerialManager::send_msg(const std::vector<T>& send_data) {  // send_msg vec
     sending_msg.flags = std::vector<bool>(send_data.begin(), send_data.end());
   else
     return;  // サポートされていない型の場合は何もしない
+  ThisThread::sleep_for(1ms);
 }
+
 template <typename T, std::size_t S>
 void SerialManager::send_msg(const std::array<T, S>& send_data) {  // send_msg array用
   if constexpr (std::is_same_v<T, float>)

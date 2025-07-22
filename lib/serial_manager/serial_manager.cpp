@@ -34,7 +34,7 @@ SerialManager::SerialManager(BufferedSerial& serial, uint8_t id, PinName show_id
 
 void SerialManager::send_log(const std::string& log_msg) {
   sending_log = log_msg;
-  ThisThread::sleep_for(5ms);
+  ThisThread::sleep_for(1ms);
 }
 
 int SerialManager::get_id() const {
@@ -133,7 +133,7 @@ void SerialManager::serial_send() {
               send_bytes = make_msg(sending_msg.numbers);
               men_serial.write(send_bytes.data(), send_bytes.size());
               sending_msg.numbers.clear();
-              ThisThread::sleep_for(5ms);
+              ThisThread::sleep_for(10ms);
             }
             if (!sending_msg.flags.empty()) {  // boolを送信
               // booldata.assign(sending_msg.flags.begin(), sending_msg.flags.end());
@@ -147,14 +147,14 @@ void SerialManager::serial_send() {
               send_bytes = make_msg(booldata);
               men_serial.write(send_bytes.data(), send_bytes.size());
               sending_msg.flags.clear();
-              ThisThread::sleep_for(5ms);
+              ThisThread::sleep_for(std::chrono::milliseconds(10));
             }
             if (!sending_log.empty()) {  // ログメッセージを送信
               encoded_msg = make_msg(sending_log);
               men_serial.write(encoded_msg.data(), encoded_msg.size());
               sending_log.clear();
               sending_log = "";
-              ThisThread::sleep_for(5ms);
+              ThisThread::sleep_for(10ms);
             }
           }
           break;
