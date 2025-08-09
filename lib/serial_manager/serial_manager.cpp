@@ -126,36 +126,34 @@ void SerialManager::serial_send() {
             for (int i = 0; i < 20; i++) {  // 5はなんとなく、適当な値
               send_bytes = cobs_encode(config::START_COM_BYTES);
               men_serial.write(send_bytes.data(), send_bytes.size());  // 通信開始の合図を送る
-              ThisThread::sleep_for(5ms);
             }
           } else {
-            if (!sending_msg.numbers.empty()) {  // 小数を送信
-              send_bytes = make_msg(sending_msg.numbers);
+            SerialMsg buf_msg = sending_msg;
+            if (!buf_msg.numbers.empty()) {  // 小数を送信
+              send_bytes = make_msg(buf_msg.numbers);
               men_serial.write(send_bytes.data(), send_bytes.size());
               sending_msg.numbers.clear();
-              ThisThread::sleep_for(10ms);
             }
-            if (!sending_msg.flags.empty()) {  // boolを送信
-              // booldata.assign(sending_msg.flags.begin(), sending_msg.flags.end());
+            if (!buf_msg.flags.empty()) {  // boolを送信
               booldata.clear();
-              for (bool flag : sending_msg.flags) {
+              for (bool flag : buf_msg.flags) {
                 if (flag)
-                  booldata.push_back(0x02);
-                else if (!flag)
                   booldata.push_back(0x01);
+                else if (!flag)
+                  booldata.push_back(0x02);
               }
               send_bytes = make_msg(booldata);
               men_serial.write(send_bytes.data(), send_bytes.size());
               sending_msg.flags.clear();
-              ThisThread::sleep_for(std::chrono::milliseconds(10));
+              ThisThread::sleep_for(std::chrono::milliseconds(3));
             }
             if (!sending_log.empty()) {  // ログメッセージを送信
               encoded_msg = make_msg(sending_log);
               men_serial.write(encoded_msg.data(), encoded_msg.size());
               sending_log.clear();
               sending_log = "";
-              ThisThread::sleep_for(10ms);
             }
+            ThisThread::sleep_for(10ms);
           }
           break;
         }

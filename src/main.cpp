@@ -9,16 +9,20 @@ SerialManager serial(pc, LED1, BUTTON1);  // シリアルマネージャのイ�
 // SerialManager serial(pc,3,LED1,BUTTON1); //初期IDの指定
 // SerialManager serial(pc, 3);  // シリアルマネージャのインスタンスを作成(ID表示機能なし)
 
+float num = 0;
+
 int main() {
   pc.set_blocking(true);
   pc.set_baud(115200);
-  std::vector<float> sending_msg = {11.2789, 25.7345, 66.867, 44.9, 3.4567, 11.2789, 25.7345, 66.867, 44.9, 3.4567, 11.2789, 25.7345, 66.867, 44.9, 3.4567, 11.2789, 25.7345, 66.867, 44.9, 3.4567, 11.2789, 25.7345, 66.867, 44.9, 3.4567, 11.2789, 25.7345, 66.867, 44.9, 3.4567, 11.2789, 25.7345, 66.867, 44.9, 3.4567, 11.2789, 25.7345, 66.867, 44.9, 3.4567};
+  serial.send_log("Hello World");  // ログ送信
   while (1) {
-    std::string log_msg;
-    for (int i = 0; i < 4; i++)
-      log_msg += std::to_string(serial.received_nums[i]) + ":";
-    serial.send_log(log_msg);  // ログ送信
-    serial.send_msg(sending_msg);
+    if (serial.received_flags[0]) {
+      serial.send_log("button pressed");
+    }
+    std::vector<float> floats = serial.received_nums;
+    std::vector<bool> bools = serial.received_flags;
+    serial.send_msg({floats, bools});
+    // serial.send_msg(SerialMsg(floats, bools));//これでも良い
   }
   return 0;
 }

@@ -113,6 +113,7 @@ class SerialManager {
   Kernel::Clock::time_point last_heart_beat_time;
 
   bool first_msg = true;
+  bool msg_sending = false;
 
   const uint8_t float_keeper = 0x01;  // 小数の識別子
   const uint8_t bool_keeper = 0x02;   // bool型の識別子
@@ -141,16 +142,18 @@ void SerialMsg::assign(const std::array<T, N>& a) {
 
 template <typename T>
 void SerialManager::send_msg(const std::vector<T>& send_data) {  // send_msg vector用
-  if constexpr (std::is_same_v<T, float>)
-    sending_msg.numbers = send_data;
-  else if constexpr (std::is_same_v<T, double>)
-    sending_msg.numbers = std::vector<float>(send_data.begin(), send_data.end());
-  else if constexpr (std::is_same_v<T, bool>)
-    sending_msg.flags = send_data;
-  else if constexpr (std::is_same_v<T, uint8_t>)
-    sending_msg.flags = std::vector<bool>(send_data.begin(), send_data.end());
-  else
-    return;  // サポートされていない型の場合は何もしない
+  if (!msg_sending) {
+    if constexpr (std::is_same_v<T, float>)
+      sending_msg.numbers = send_data;
+    else if constexpr (std::is_same_v<T, double>)
+      sending_msg.numbers = std::vector<float>(send_data.begin(), send_data.end());
+    else if constexpr (std::is_same_v<T, bool>)
+      sending_msg.flags = send_data;
+    else if constexpr (std::is_same_v<T, uint8_t>)
+      sending_msg.flags = std::vector<bool>(send_data.begin(), send_data.end());
+    else
+      return;  // サポートされていない型の場合は何もしない
+  }
   ThisThread::sleep_for(1ms);
 }
 
