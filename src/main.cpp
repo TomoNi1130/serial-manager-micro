@@ -19,12 +19,11 @@ int main() {
   pc.set_baud(115200);
   serial.send_log("Hello World");  // ログ送信
   while (1) {
-    if (serial.received_flags[0] && !pre_button) {  // ボタンが押されたとき
+    if (serial.received_flags[0] != pre_button) {  // ボタンが押されたとき
       // serial.send_log("button pressed");
-      led = !led;
-    } else if (!serial.received_flags[0] && pre_button) {  // ボタンが離されたとき
-      pre_button = false;
+      led = serial.received_flags[0];
     }
+    pre_button = serial.received_flags[0];
     std::vector<float> floats = serial.received_nums;
     std::vector<bool> bools = serial.received_flags;
     serial.send_msg({floats, bools});
