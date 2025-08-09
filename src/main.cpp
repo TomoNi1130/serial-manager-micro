@@ -21,8 +21,8 @@ int main() {
   while (1) {
     if (serial.received_flags[0] && !pre_button) {  // ボタンが押されたとき
       // serial.send_log("button pressed");
-      led = !led;  // ボタンが押されたらLEDをトグル
-    } else {
+      led = !led;
+    } else if (!serial.received_flags[0] && pre_button) {  // ボタンが離されたとき
       pre_button = false;
     }
     std::vector<float> floats = serial.received_nums;
