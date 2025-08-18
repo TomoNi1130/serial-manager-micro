@@ -34,7 +34,7 @@ SerialManager::SerialManager(BufferedSerial& serial, uint8_t id, PinName show_id
 
 void SerialManager::send_log(const std::string& log_msg) {
   sending_log = log_msg;
-  ThisThread::sleep_for(1ms);
+  ThisThread::sleep_for(10ms);
 }
 
 int SerialManager::get_id() const {
@@ -46,17 +46,15 @@ bool SerialManager::is_connected() const {
 
 void SerialManager::show_id() {
   while (1) {
-    while (mode == SHOWID) {
-      for (int i = 0; i < serial_id; i++) {
-        led = true;
-        ThisThread::sleep_for(150ms);
-        led = false;
-        ThisThread::sleep_for(150ms);
-      }
-      ThisThread::sleep_for(1200ms);
+    for (int i = 0; i < serial_id; i++) {
+      led = true;
+      ThisThread::sleep_for(150ms);
+      led = false;
+      ThisThread::sleep_for(150ms);
     }
-    ThisThread::sleep_for(1000ms);
+    ThisThread::sleep_for(1200ms);
   }
+  ThisThread::sleep_for(1000ms);
 }
 
 void SerialManager::change_mode() {
@@ -94,12 +92,12 @@ void SerialManager::change_mode() {
           save_id_to_backup(serial_id);  // バックアップに保存
         }
         id_set_timer.start();
-        ThisThread::sleep_for(100ms);
+        ThisThread::sleep_for(std::chrono::milliseconds(100));
       }
     } else {
       button_pushing = false;
     }
-    ThisThread::sleep_for(100ms);
+    ThisThread::sleep_for(std::chrono::milliseconds(100));
   }
 }
 
@@ -123,10 +121,10 @@ void SerialManager::serial_send() {
         case CONNECT: {
           if (first_msg) {
             first_msg = false;
-            for (int i = 0; i < 20; i++) {  // 5はなんとなく、適当な値
+            for (int i = 0; i < 20; i++) {
               send_bytes = cobs_encode(config::START_COM_BYTES);
               men_serial.write(send_bytes.data(), send_bytes.size());  // 通信開始の合図を送る
-              ThisThread::sleep_for(std::chrono::milliseconds(10));
+              ThisThread::sleep_for(std::chrono::milliseconds(20));
             }
           } else {
             SerialMsg buf_msg = sending_msg;
@@ -134,7 +132,7 @@ void SerialManager::serial_send() {
               send_bytes = make_msg(buf_msg.numbers);
               men_serial.write(send_bytes.data(), send_bytes.size());
               sending_msg.numbers.clear();
-              ThisThread::sleep_for(std::chrono::milliseconds(10));
+              ThisThread::sleep_for(std::chrono::milliseconds(20));
             }
             if (!buf_msg.flags.empty()) {  // boolを送信
               booldata.clear();
@@ -147,14 +145,14 @@ void SerialManager::serial_send() {
               send_bytes = make_msg(booldata);
               men_serial.write(send_bytes.data(), send_bytes.size());
               sending_msg.flags.clear();
-              ThisThread::sleep_for(std::chrono::milliseconds(10));
+              ThisThread::sleep_for(std::chrono::milliseconds(20));
             }
             if (!sending_log.empty()) {  // ログメッセージを送信
               encoded_msg = make_msg(sending_log);
               men_serial.write(encoded_msg.data(), encoded_msg.size());
               sending_log.clear();
               sending_log = "";
-              ThisThread::sleep_for(std::chrono::milliseconds(10));
+              ThisThread::sleep_for(std::chrono::milliseconds(20));
             }
           }
           break;
@@ -164,7 +162,7 @@ void SerialManager::serial_send() {
           send_id_msg.push_back(uint8_t(serial_id));  // マイコンIDを追加
           self_introduction_msg = cobs_encode(send_id_msg);
           men_serial.write(self_introduction_msg.data(), self_introduction_msg.size());
-          ThisThread::sleep_for(std::chrono::milliseconds(10));
+          ThisThread::sleep_for(std::chrono::milliseconds(20));
           break;
         }
         case SETUP: {
