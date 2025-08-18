@@ -126,6 +126,7 @@ void SerialManager::serial_send() {
             for (int i = 0; i < 20; i++) {  // 5はなんとなく、適当な値
               send_bytes = cobs_encode(config::START_COM_BYTES);
               men_serial.write(send_bytes.data(), send_bytes.size());  // 通信開始の合図を送る
+              ThisThread::sleep_for(std::chrono::milliseconds(10));
             }
           } else {
             SerialMsg buf_msg = sending_msg;
@@ -133,6 +134,7 @@ void SerialManager::serial_send() {
               send_bytes = make_msg(buf_msg.numbers);
               men_serial.write(send_bytes.data(), send_bytes.size());
               sending_msg.numbers.clear();
+              ThisThread::sleep_for(std::chrono::milliseconds(10));
             }
             if (!buf_msg.flags.empty()) {  // boolを送信
               booldata.clear();
@@ -145,24 +147,24 @@ void SerialManager::serial_send() {
               send_bytes = make_msg(booldata);
               men_serial.write(send_bytes.data(), send_bytes.size());
               sending_msg.flags.clear();
-              ThisThread::sleep_for(std::chrono::milliseconds(3));
+              ThisThread::sleep_for(std::chrono::milliseconds(10));
             }
             if (!sending_log.empty()) {  // ログメッセージを送信
               encoded_msg = make_msg(sending_log);
               men_serial.write(encoded_msg.data(), encoded_msg.size());
               sending_log.clear();
               sending_log = "";
+              ThisThread::sleep_for(std::chrono::milliseconds(10));
             }
-            ThisThread::sleep_for(10ms);
           }
           break;
         }
         case STANBY: {
           send_id_msg = config::INTRODUCTION_BYTES;
-          send_id_msg.push_back(serial_id);  // マイコンIDを追加
+          send_id_msg.push_back(uint8_t(serial_id));  // マイコンIDを追加
           self_introduction_msg = cobs_encode(send_id_msg);
           men_serial.write(self_introduction_msg.data(), self_introduction_msg.size());
-          ThisThread::sleep_for(std::chrono::milliseconds(static_cast<int>(self_introduction_msg.size() * WaitTimePerByte_)));
+          ThisThread::sleep_for(std::chrono::milliseconds(10));
           break;
         }
         case SETUP: {
@@ -176,9 +178,25 @@ void SerialManager::serial_send() {
   }
 }
 
+std::vector<uint8_t> cobs_decode(const std::vector<uint8_t>& input) {
+  std::vector<uint8_t> decoded_data;
+  uint8_t OBH;  // ゼロが出るまでの数
+  OBH = input[0];
+  for (uint8_t i = 1; i < input.size(); i++) {
+    if (i == OBH) {
+      OBH = input[i] + OBH;
+      decoded_data.push_back(0x00);
+    } else {
+      decoded_data.push_back(input[i]);
+    }
+  }
+  decoded_data.pop_back();
+  return decoded_data;
+}
+
 void SerialManager::serial_callback() {
   std::vector<uint8_t> receive_bytes;
-  std::vector<uint8_t> decorded_data;
+  std::vector<uint8_t> decoded_data;
 
   while (1) {
     if (men_serial.readable()) {
@@ -189,59 +207,56 @@ void SerialManager::serial_callback() {
       if (buf[0] == 0x00) {
         uint8_t type_keeper = 0;
         if (state_ == CONNECT) {
-          type_keeper = receive_bytes[0];  // 型識別用のデータ(使わない)
+          type_keeper = receive_bytes[0];  // 型識別用のデータ
           receive_bytes.erase(receive_bytes.begin());
         }
-        uint8_t OBH;  // ゼロが出るまでの数
-        OBH = receive_bytes[0];
-        for (uint8_t i = 1; i < receive_bytes.size(); i++) {
-          if (i == OBH) {
-            decorded_data.push_back(0x00);
-            OBH = receive_bytes[i] + OBH;
-          } else {
-            decorded_data.push_back(receive_bytes[i]);
-          }
-        }
-        decorded_data.erase(decorded_data.end() - 1);
+        decoded_data = cobs_decode(receive_bytes);
         // デコード完了
+
+        std::vector<uint8_t> test_log = decoded_data;
+        std::vector<uint8_t> cobs_msg = cobs_encode(test_log);
+        if (decoded_data.size() == config::RECORL_BYTES.size() + 1)
+          men_serial.write(cobs_msg.data(), cobs_msg.size());
 
         switch (state_) {
           case CONNECT: {
             if (type_keeper == config::FLOAT_HEADER) {
               received_nums.clear();
-              for (size_t i = 0; i < decorded_data.size() / sizeof(float); i++) {
+              for (size_t i = 0; i < decoded_data.size() / sizeof(float); i++) {
                 float result;
-                memcpy(&result, &decorded_data[i * sizeof(float)], sizeof(float));
+                memcpy(&result, &decoded_data[i * sizeof(float)], sizeof(float));
                 received_nums.push_back(result);
               }
             } else if (type_keeper == config::BOOL_HAEDER) {
               received_flags.clear();
-              for (size_t i = 0; i < decorded_data.size(); i++)
-                if (decorded_data[i] == 0x01) {
+              for (size_t i = 0; i < decoded_data.size(); i++)
+                if (decoded_data[i] == 0x01) {
                   received_flags.push_back(true);
-                } else if (decorded_data[i] == 0x00) {
+                } else if (decoded_data[i] == 0x00) {
                   received_flags.push_back(false);
                 }
             } else if (type_keeper == config::HEART_BEAT_HEADER) {
-              if (decorded_data == config::HEARTBEAT_BYTES) {
+              if (decoded_data == config::HEARTBEAT_BYTES) {
                 last_heart_beat_time = Kernel::Clock::now();
               }
             }
             break;
           }
           case STANBY: {
-            if (std::equal(config::RECORL_BYTES.begin(), config::RECORL_BYTES.end(), decorded_data.begin()) && decorded_data.back() == serial_id) {
-              state_ = CONNECT;  // PCが存在することを確認
-              first_msg = true;
-            } else if (decorded_data == config::HEARTBEAT_BYTES) {
+            if (decoded_data.size() == config::RECORL_BYTES.size() + 1) {
+              if (std::equal(config::RECORL_BYTES.begin(), config::RECORL_BYTES.end(), decoded_data.begin())) {
+                state_ = CONNECT;  // PCが存在することを確認
+                first_msg = true;
+              }
+            } else if (decoded_data == config::HEARTBEAT_BYTES) {
               last_heart_beat_time = Kernel::Clock::now();
             }
             break;
           }
           case SETUP: {
-            if (std::equal(config::INTRODUCTION_BYTES.begin(), config::INTRODUCTION_BYTES.end(), decorded_data.begin())) {
+            if (decoded_data == config::INTRODUCTION_BYTES) {
               state_ = STANBY;  // PCが存在することを確認
-            } else if (decorded_data == config::HEARTBEAT_BYTES) {
+            } else if (decoded_data == config::HEARTBEAT_BYTES) {
               last_heart_beat_time = Kernel::Clock::now();
             }
             break;
@@ -250,7 +265,7 @@ void SerialManager::serial_callback() {
             break;
         }
         receive_bytes.clear();
-        decorded_data.clear();
+        decoded_data.clear();
       }
     }
   }

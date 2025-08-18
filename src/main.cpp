@@ -9,18 +9,16 @@ SerialManager serial(pc, LED1, BUTTON1);  // シリアルマネージャのイ�
 // SerialManager serial(pc,3,LED1,BUTTON1); //初期IDの指定
 // SerialManager serial(pc, 3);  // シリアルマネージャのインスタンスを作成(ID表示機能なし)
 
-float num = 0;
+float num = 0.0f;
 
 int main() {
   pc.set_blocking(true);
   pc.set_baud(115200);
   serial.send_log("Hello World");  // ログ送信
   while (1) {
-    if (serial.received_flags[0]) {
-      serial.send_log("button pressed");
-    }
     std::vector<float> floats = serial.received_nums;
     std::vector<bool> bools = serial.received_flags;
+    // serial.send_msg(floats);
     serial.send_msg({floats, bools});
     // serial.send_msg(SerialMsg(floats, bools));//これでも良い
   }
