@@ -140,7 +140,7 @@ void SerialManager::serial_send() {
                 if (flag)
                   booldata.push_back(0x01);
                 else if (!flag)
-                  booldata.push_back(0x02);
+                  booldata.push_back(0x00);
               }
               send_bytes = make_msg(booldata);
               men_serial.write(send_bytes.data(), send_bytes.size());

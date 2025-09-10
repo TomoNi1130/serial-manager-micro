@@ -14,12 +14,16 @@ float num = 0.0f;
 int main() {
   pc.set_blocking(true);
   pc.set_baud(115200);
-  serial.send_log("Hello World");  // ログ送信
+
   while (1) {
     std::vector<float> floats = serial.received_nums;
     std::vector<bool> bools = serial.received_flags;
-    // serial.send_msg(floats);
+    serial.send_log("Hello World");  // ログ送信
     serial.send_msg({floats, bools});
+    std::vector<float> new_floats = {0.0, 0.01, 111.0, 42330.0};
+    std::vector<bool> new_bools = {true, false, 0, 1};
+    serial.send_msg(new_floats);
+    serial.send_msg(new_bools);  // 個別に分けることもできる
     // serial.send_msg(SerialMsg(floats, bools));//これでも良い
   }
   return 0;
